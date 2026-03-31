@@ -31,7 +31,11 @@ class Task:
         self.last_completed_date = completed_on or date.today().isoformat()
 
     def create_next_occurrence(self, reference_date: Optional[date] = None) -> Optional["Task"]:
-        """Create the next task instance for supported recurring schedules."""
+        """Create the next daily or weekly task instance.
+
+        This keeps the completed task in the history while generating a fresh,
+        incomplete copy with a new `due_date` based on `timedelta`.
+        """
         if self.frequency not in {"daily", "weekly"}:
             return None
 
@@ -51,7 +55,11 @@ class Task:
         )
 
     def is_due_today(self, reference_date: Optional[date] = None) -> bool:
-        """Return True when this task should appear in today's plan."""
+        """Return `True` when the task should appear in the current plan.
+
+        Future-dated tasks are filtered out, completed one-time tasks stay hidden,
+        and recurring tasks only reappear when their next scheduled date is due.
+        """
         if reference_date is None:
             reference_date = date.today()
 
@@ -295,7 +303,12 @@ class Scheduler:
         return [(pet, task) for pet, task in owner.get_all_tasks() if task.is_due_today()]
 
     def mark_task_complete(self, owner: Owner, pet_name: str, task_title: str) -> bool:
-        """Mark a specific task as complete and auto-schedule the next recurring instance."""
+        """Mark a task complete and queue its next recurring occurrence.
+
+        Returns `True` when a matching open task is found. For `daily` and
+        `weekly` tasks, a new incomplete task is created instead of mutating the
+        original completed record.
+        """
         for pet in owner.get_pets():
             if pet.pet_name == pet_name:
                 for task in pet.get_tasks():
@@ -316,7 +329,11 @@ class Scheduler:
         )
 
     def task_sort_key(self, task: Task) -> tuple:
-        """Sort by time, then smart tie-breakers for owner-friendly schedules."""
+        """Build the multi-step sort key for the daily schedule.
+
+        Tasks are ordered by time first, then by priority, health importance,
+        shorter duration, and finally title for stable human-readable output.
+        """
         return (
             task.time or "99:99",
             -self.PRIORITY_ORDER.get(task.priority.lower(), 0),
@@ -326,7 +343,12 @@ class Scheduler:
         )
 
     def detect_conflicts(self, scheduled_items: list[tuple[Pet, Task]] | list[Task], owner: Optional[Owner] = None) -> list[str]:
-        """Return lightweight warning messages for tasks that overlap at the same time."""
+        """Detect exact same-time conflicts and return warning messages.
+
+        The strategy is intentionally lightweight: it groups tasks by matching
+        `time` values and reports overlaps as readable warnings instead of
+        crashing the program.
+        """
         entries: list[tuple[str, Task]] = []
 
         if scheduled_items and isinstance(scheduled_items[0], tuple):
@@ -351,7 +373,7 @@ class Scheduler:
         return conflicts
 
     def get_conflict_warnings(self, owner: Owner) -> list[str]:
-        """Lightweight conflict detection that returns warning text instead of raising errors."""
+        """Return user-friendly conflict warnings for the owner's due tasks."""
         return self.detect_conflicts(self.get_pending_tasks(owner))
 
     def organize_by_time(self, owner: Owner) -> list[tuple[Pet, Task]]:

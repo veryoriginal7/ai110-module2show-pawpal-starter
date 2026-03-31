@@ -41,6 +41,24 @@ def test_daily_task_rolls_over_if_not_completed_today():
     assert [scheduled.title for scheduled in plan.getPlan()] == ["Morning meds"]
 
 
+def test_tasks_are_sorted_in_chronological_order():
+    owner = Owner(owner_name="Jordan")
+    pet = Pet(pet_name="Buddy")
+    owner.add_pet(pet)
+
+    pet.add_task(Task(title="Evening walk", time="18:00", category="exercise"))
+    pet.add_task(Task(title="Breakfast", time="08:00", category="feeding"))
+    pet.add_task(Task(title="Lunch", time="12:00", category="feeding"))
+
+    plan = Scheduler().generatePlan(owner, pet, pet.get_tasks())
+
+    assert [task.title for task in plan.getPlan()] == [
+        "Breakfast",
+        "Lunch",
+        "Evening walk",
+    ]
+
+
 def test_generate_plan_records_time_conflicts():
     owner = Owner(owner_name="Sam")
     pet = Pet(pet_name="Mochi")
