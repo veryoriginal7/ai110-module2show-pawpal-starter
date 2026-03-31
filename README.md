@@ -70,6 +70,6 @@ confidence lever: 4.5/5
 6. Daily and weekly recurrence rollover
 7. Due-date filtering
 8. Monthly recurrence support
-<img src = 'pic.png' title='pic1' width='' alt='picture' />
-<img src = 'pic.png' title='pic2' width='' alt='picture' />
-<img src = 'pic.png' title='pic3' width='' alt='picture' />
+<img src = 'pic1.png' title='pic1' width='' alt='picture' />
+<img src = 'pic2.png' title='pic2' width='' alt='picture' />
+<img src = 'pic3.png' title='pic3' width='' alt='picture' />
